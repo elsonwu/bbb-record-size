@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"math"
 	"net/http"
 	"os"
@@ -26,7 +25,7 @@ func main() {
 		id := strings.TrimPrefix(r.URL.Path, "/meeting/")
 
 		if id == "" {
-			renderJSON(w, r, 500, output{
+			renderJSON(w, r, http.StatusInternalServerError, output{
 				"id":    id,
 				"size":  0,
 				"error": "id is missing",
@@ -37,10 +36,10 @@ func main() {
 		if s, err := folderSize(*flagRawPath + id); err == nil {
 			size += s
 		} else {
-			renderJSON(w, r, 500, output{
+			renderJSON(w, r, http.StatusInternalServerError, output{
 				"id":    id,
 				"size":  0,
-				"error": *flagRawPath + id + " does not exist",
+				"error": err.Error(),
 			})
 			return
 		}
@@ -48,15 +47,15 @@ func main() {
 		if s, err := folderSize(*flagPublisedPath + id); err == nil {
 			size += s
 		} else {
-			renderJSON(w, r, 500, output{
+			renderJSON(w, r, http.StatusInternalServerError, output{
 				"id":    id,
 				"size":  0,
-				"error": *flagPublisedPath + id + " does not exist",
+				"error": err.Error(),
 			})
 			return
 		}
 
-		renderJSON(w, r, 200, output{
+		renderJSON(w, r, http.StatusOK, output{
 			"id":    id,
 			"size":  round(float64(size)/1024, 2), // kb
 			"error": "",
@@ -72,19 +71,22 @@ func round(f float64, n int) float64 {
 }
 
 func renderJSON(w http.ResponseWriter, r *http.Request, status int, data interface{}) {
-	d, err := json.Marshal(data)
+	js, err := json.Marshal(data)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-	} else {
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, string(d))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
 }
 
 func folderSize(fpath string) (size int64, err error) {
 	err = filepath.Walk(fpath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
 		if info.IsDir() {
 			return nil
 		}
