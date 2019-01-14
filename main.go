@@ -13,16 +13,19 @@ import (
 var flagHost = flag.String("host", ":1234", "the host to listen to")
 var flagRawPath = flag.String("raw_path", "/var/bigbluebutton/recording/raw/", "the base path of raw folder")
 var flagPublisedPath = flag.String("published_path", "/var/bigbluebutton/published/presentation/", "the base path of published folder")
+var flagPathName = flag.String("path_name", "record", "the base path in URL")
 
 type output map[string]interface{}
 
 func main() {
 	flag.Parse()
 
+	pathPrefix := "/" + *flagPathName + "/"
 	r := http.NewServeMux()
-	r.HandleFunc("/meeting/", func(w http.ResponseWriter, r *http.Request) {
+
+	r.HandleFunc(pathPrefix, func(w http.ResponseWriter, r *http.Request) {
 		var size int64
-		id := strings.TrimPrefix(r.URL.Path, "/meeting/")
+		id := strings.TrimPrefix(r.URL.Path, pathPrefix)
 
 		if id == "" {
 			renderJSON(w, r, http.StatusInternalServerError, output{
