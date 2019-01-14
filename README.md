@@ -1,8 +1,8 @@
-# bbb-meeting-size
-Small tool to calculate how much space the BigBlueButton meeting use
+# bbb-record-size
+Small tool to calculate how much space the BigBlueButton record use
 
 # Usage
-> ./bbb-meeting-size
+> ./bbb-record-size
 
 # Parameters
 
@@ -18,11 +18,11 @@ Small tool to calculate how much space the BigBlueButton meeting use
 
 # API
 
-	http://bbb.yourhost.com:1234/meeting/<BBB meeting ID>
+	http://bbb.yourhost.com:1234/record/<BBB record internal ID>
 
 # Response
 	{
    		error: "string, error string",
-    	id: "string, meeting ID",
+    	id: "string, record internal ID",
     	size: "float, how many kb"
 	}
